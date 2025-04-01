@@ -1,3 +1,10 @@
-import catchAsync from '../utils/catchAsync.js';
-import AppError from '../utils/appError.js';
-import Interaction from '../models/interactionModel.js';
+import factory from './handlerFactory.js';
+
+// CRUD operations
+const getAll = factory.getAll('interactions');
+const getOne = factory.getOne('interactions');
+const createOne = factory.createOne('interactions');
+const updateOne = factory.updateOne('interactions');
+const deleteOne = factory.deleteOne('interactions');
+
+export default { getAll, getOne, createOne, updateOne, deleteOne };

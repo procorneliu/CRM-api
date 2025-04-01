@@ -76,8 +76,8 @@ const checkIfUserExists = async (email) => {
 };
 
 // checking if inserted password is correct
-const checkPassword = async (candidatePassowrd, correctPassword) => {
-  return await bcrypt.compare(candidatePassowrd, correctPassword);
+const checkPassword = async (candidatePassword, correctPassword) => {
+  return await bcrypt.compare(candidatePassword, correctPassword);
 };
 
 export default {

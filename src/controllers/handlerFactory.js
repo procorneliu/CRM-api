@@ -1,10 +1,11 @@
 import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
+import BaseModel from '../models/baseModel.js';
 
 // Getting all data from PostgreSQL table
-const getAll = (Model) =>
+const getAll = (tableName) =>
   catchAsync(async (req, res, next) => {
-    const allDocuments = await Model.getAllUsers();
+    const allDocuments = await new BaseModel(tableName).findAll();
 
     res.status(200).json({
       status: 'success',
@@ -16,11 +17,11 @@ const getAll = (Model) =>
   });
 
 // Getting one row of data based on provided ID from specified table
-const getOne = (Model) =>
+const getOne = (tableName) =>
   catchAsync(async (req, res, next) => {
     const docID = req.params.id;
 
-    const doc = await Model.getUser(docID);
+    const doc = await new BaseModel(tableName).findOne(docID);
     if (!doc) {
       return next(new AppError('No documents with this ID.', 404));
     }
@@ -34,7 +35,7 @@ const getOne = (Model) =>
   });
 
 // Creating one row of data in PostgeSQL table
-const createOne = (Model) =>
+const createOne = (tableName) =>
   catchAsync(async (req, res, next) => {
     const { name, email, password, role } = req.body;
 
@@ -43,7 +44,7 @@ const createOne = (Model) =>
       return next(new AppError('Please provide full information for creating a new document!', 404));
 
     // 2. Creating user
-    const newDocument = await Model.createUser(name, email, password, role);
+    const newDocument = await new BaseModel(tableName).create(name, email, password, role);
     if (!newDocument)
       return next(new AppError('Something went wrong when creating new document. Please try again.', 404));
 
@@ -56,16 +57,16 @@ const createOne = (Model) =>
   });
 
 // Updating data about one row in PostgeSQL table
-const updateOne = (Model) =>
+const updateOne = (tableName) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
 
     // 1. Check if users exists
-    const doc = await Model.getUser(id);
+    const doc = await new BaseModel(tableName).findOne(id);
     if (!doc) return next(new AppError('Document not found.', 404));
 
     // 2. Update all indicated fields
-    const updatedDocument = await Model.updateUser(id, req.body);
+    const updatedDocument = await new BaseModel(tableName).update(id, req.body);
 
     res.status(200).json({
       status: 'success',
@@ -76,16 +77,16 @@ const updateOne = (Model) =>
   });
 
 // Deleting one row of data in PostgeSQL table
-const deleteOne = (Model) =>
+const deleteOne = (tableName) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
 
     // 1. Check if user exists
-    const doc = await Model.getUser(id);
+    const doc = await BaseModel(tableName).findOne(id);
     if (!doc) return next(new AppError('Document not found.', 404));
 
     // 2. Delete user
-    await Model.deleteUser(id);
+    await BaseModel(tableName).delete(id);
 
     res.status(204).json({
       status: 'success',

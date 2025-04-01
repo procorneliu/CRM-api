@@ -1,11 +1,10 @@
-import User from '../models/userModel.js';
 import factory from './handlerFactory.js';
 
 // CRUD operations
-const getAllUsers = factory.getAll(User);
-const getUser = factory.getOne(User);
-const createUser = factory.createOne(User);
-const updateUser = factory.updateOne(User);
-const deleteUser = factory.deleteOne(User);
+const getAll = factory.getAll('users');
+const getOne = factory.getOne('users');
+const createOne = factory.createOne('users');
+const updateOne = factory.updateOne('users');
+const deleteOne = factory.deleteOne('users');
 
-export default { getAllUsers, getUser, createUser, updateUser, deleteUser };
+export default { getAll, getOne, createOne, updateOne, deleteOne };
