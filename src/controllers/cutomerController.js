@@ -1,10 +1,7 @@
 import factory from './handlerFactory.js';
+import { createCRUDControllers } from '../utils/createCRUD.js';
 
 // CRUD operations
-const getAll = factory.getAll('customers');
-const getOne = factory.getOne('customers');
-const createOne = factory.createOne('customers');
-const updateOne = factory.updateOne('customers');
-const deleteOne = factory.deleteOne('customers');
+const customerController = createCRUDControllers(factory, 'customers');
 
-export default { getAll, getOne, createOne, updateOne, deleteOne };
+export default customerController;

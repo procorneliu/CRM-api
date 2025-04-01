@@ -1,10 +1,7 @@
 import factory from './handlerFactory.js';
+import { createCRUDControllers } from '../utils/createCRUD.js';
 
 // CRUD operations
-const getAll = factory.getAll('reminders');
-const getOne = factory.getOne('reminders');
-const createOne = factory.createOne('reminders');
-const updateOne = factory.updateOne('reminders');
-const deleteOne = factory.deleteOne('reminders');
+const reminderController = createCRUDControllers(factory, 'reminders');
 
-export default { getAll, getOne, createOne, updateOne, deleteOne };
+export default reminderController;

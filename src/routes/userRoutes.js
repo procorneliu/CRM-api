@@ -1,7 +1,7 @@
 import express from 'express';
 import userController from '../controllers/userController.js';
 import authController from '../controllers/authController.js';
-import createCRUDRoutes from '../utils/createCRUDRoutes.js';
+import { createCRUDRoutes } from '../utils/createCRUD.js';
 
 const router = express.Router();
 
