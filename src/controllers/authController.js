@@ -2,11 +2,33 @@ import { promisify } from 'util';
 import jwt from 'jsonwebtoken';
 import catchAsync from './../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
+import BaseModel from '../models/baseModel.js';
 import User from '../models/userModel.js';
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
+
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user.id);
+  const cookieOptions = {
+    expires: new Date(Date.now() + process.env.JWT_COOKIES_EXPIRES_IN * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+  };
+  // Use only https in production
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+
+  // Storing token in cookies
+  res.cookie('jwt', token, cookieOptions);
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
   });
 };
 
@@ -19,19 +41,10 @@ const signup = catchAsync(async (req, res, next) => {
   // creating new user
   const user = await User.registerUser(name, email, password);
 
-  // generating jwt token from user id
-  const token = signToken(user.id);
-
-  res.status(201).json({
-    status: 'success',
-    token,
-    data: {
-      user: {
-        name,
-        email,
-      },
-    },
-  });
+  // Remove password from response
+  user.password = undefined;
+  // generating jwt token from user id and sending
+  createSendToken(user, 201, res);
 });
 
 const login = catchAsync(async (req, res, next) => {
@@ -47,14 +60,14 @@ const login = catchAsync(async (req, res, next) => {
 
   if (!isPasswordCorrect) return next(new AppError('Incorrect email or password! Please try again.', 401));
 
+  // Remove password from response
+  user.password = undefined;
+
   // 3. sending jwt token for successful login
-  const token = signToken(user.id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 200, res);
 });
 
+// Checking if users are logged in
 const protect = catchAsync(async (req, res, next) => {
   // 1. Checking if token exists
   let token;
@@ -72,18 +85,30 @@ const protect = catchAsync(async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // 3. Check if user still exists
-  const currentUser = await User.getUser(decoded.id);
+  const currentUser = await new BaseModel('users').findOne(decoded.id);
+
   if (!currentUser) {
     return next(new AppError('The user belonging to this token does no longer exists.', 401));
   }
 
   // 4. Check if user changed password after token was issued
-  // ...
-
+  if (User.passwordChangedAfter(currentUser.passwordchangedat, decoded.iat)) {
+    return next(new AppError('User recently changed password! Please log in again.', 401));
+  }
   // put user in next requests after this middleware
   req.user = currentUser;
 
   next();
 });
 
-export default { signup, login, protect };
+// Grant route access only for users that have permission
+const restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(new AppError("You don't have permission to perform this action!", 403));
+    }
+    next();
+  };
+};
+
+export default { signup, login, protect, restrictTo };

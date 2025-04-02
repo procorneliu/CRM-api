@@ -37,14 +37,11 @@ const getOne = (tableName) =>
 // Creating one row of data in PostgeSQL table
 const createOne = (tableName) =>
   catchAsync(async (req, res, next) => {
-    const { name, email, password, role } = req.body;
+    // If there is no provided information
+    if (!req.body) return next(new AppError('Please provide full information for creating a new document!', 404));
 
-    // 1. Checking if all requested information is provided
-    if (!name || !email || !password || !role)
-      return next(new AppError('Please provide full information for creating a new document!', 404));
-
-    // 2. Creating user
-    const newDocument = await new BaseModel(tableName).create(name, email, password, role);
+    // Creating user
+    const newDocument = await new BaseModel(tableName).create({ ...req.body });
     if (!newDocument)
       return next(new AppError('Something went wrong when creating new document. Please try again.', 404));
 

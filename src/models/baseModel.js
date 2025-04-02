@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { querySQL } from '../config/db.js';
 
 class BaseModel {
@@ -18,7 +19,7 @@ class BaseModel {
 
   // Get a specific row from table based on ID
   async findOne(id) {
-    const query = `SELECT * FROM ${this.tableName} WHERE id = ${id};`;
+    const query = `SELECT * FROM ${this.tableName} WHERE id = ${id}`;
 
     const document = await querySQL(query);
 
@@ -26,20 +27,31 @@ class BaseModel {
   }
 
   // Create a new document
-  async create(name, email, password, role) {
-    const query = `INSERT INTO ${this.tableName}(name, email, password, role) VALUES($1, $2, $3, $4) RETURNING *`;
-    const values = [name, email, password, role];
+  async create(bodyData) {
+    // if creating using encrypt password
+    if (bodyData.password) {
+      bodyData.password = await bcrypt.hash(bodyData.password, 12);
+    }
 
-    const newDocument = await querySQL(query, values);
+    const columnKeys = Object.keys(bodyData).join(', ');
+    const columnValues = Object.values(bodyData)
+      .map((value) => (typeof value === 'string' ? `'${value}'` : value))
+      .join(', ');
+    const query = `INSERT INTO ${this.tableName}(${columnKeys}) VALUES(${columnValues}) RETURNING *`;
+
+    const newDocument = await querySQL(query);
+
+    // hide sensitive data
+    newDocument.rows[0].password = undefined;
+    newDocument.rows[0].passwordchangedat = undefined;
 
     return newDocument.rows[0];
   }
 
   // Update document
   async update(id, body) {
-    const { name, email, password, role } = body;
     // filtering body from unwanted values
-    const filteredBody = Object.fromEntries(Object.entries({ name, email, password, role }).filter(([_, v]) => v));
+    const filteredBody = Object.fromEntries(Object.entries({ ...body }).filter(([_, v]) => v));
 
     // create a query string from body content
     const valuesToChange = Object.entries(filteredBody).reduce((acc, currentValue) => {
@@ -49,6 +61,9 @@ class BaseModel {
 
     const query = `UPDATE ${this.tableName} SET ${valuesToChange.join(', ')} WHERE id = ${id} RETURNING *`;
     const updatedDocument = await querySQL(query);
+
+    // hide sensitive data
+    updatedDocument.rows[0].password = undefined;
 
     return updatedDocument.rows[0];
   }
