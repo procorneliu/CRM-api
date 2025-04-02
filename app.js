@@ -45,9 +45,10 @@ app.use(hpp());
 app.use('/api/users', userRouter);
 app.use('/api/customers', customerRouter);
 app.use('/api/sales', saleRouter);
-app.use('/api/interations', interationRouter);
+app.use('/api/interactions', interationRouter);
 app.use('/api/reminders', reminderRouter);
 
+// Handle all undefined routes
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });

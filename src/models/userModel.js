@@ -17,7 +17,7 @@ const registerUser = async (name, email, password) => {
 
 // verifying with user with this email exists, used for loggining
 const checkIfUserExists = async (email) => {
-  const query = `SELECT id, email, password FROM users
+  const query = `SELECT id, name, email, password, role FROM users
    WHERE email = $1;`;
   const values = [email];
 

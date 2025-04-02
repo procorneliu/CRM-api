@@ -6,6 +6,19 @@ class BaseModel {
     this.tableName = tableName;
   }
 
+  // replace all ' with '' to prevent PostgreSQL error
+  fixSingleQuote(data) {
+    const fixedValues = Object.fromEntries(
+      Object.entries(data).map(([key, val]) => {
+        if (typeof val === 'string') val = val.replaceAll("'", "''");
+
+        return [key, val];
+      }),
+    );
+
+    return fixedValues;
+  }
+
   // Get all data from table
   async findAll() {
     // const query = `SELECT * FROM ${this.tableName};`;
@@ -23,27 +36,34 @@ class BaseModel {
 
     const document = await querySQL(query);
 
+    // if password was not changed don't show in response
+    if (document.rows[0].password_changed_at === null) document.rows[0].password_changed_at = undefined;
+
     return document.rows[0];
   }
 
   // Create a new document
   async create(bodyData) {
-    // if creating using encrypt password
+    // if creating user encrypt password
     if (bodyData.password) {
       bodyData.password = await bcrypt.hash(bodyData.password, 12);
     }
+    // fixing single quote error
+    const singleQuotesFix = this.fixSingleQuote(bodyData);
 
-    const columnKeys = Object.keys(bodyData).join(', ');
-    const columnValues = Object.values(bodyData)
+    // creating strings for what columns with what values to set
+    const columnKeys = Object.keys(singleQuotesFix).join(', ');
+    const columnValues = Object.values(singleQuotesFix)
       .map((value) => (typeof value === 'string' ? `'${value}'` : value))
       .join(', ');
+
     const query = `INSERT INTO ${this.tableName}(${columnKeys}) VALUES(${columnValues}) RETURNING *`;
 
     const newDocument = await querySQL(query);
 
     // hide sensitive data
     newDocument.rows[0].password = undefined;
-    newDocument.rows[0].passwordchangedat = undefined;
+    newDocument.rows[0].password_changed_at = undefined;
 
     return newDocument.rows[0];
   }
@@ -52,9 +72,11 @@ class BaseModel {
   async update(id, body) {
     // filtering body from unwanted values
     const filteredBody = Object.fromEntries(Object.entries({ ...body }).filter(([_, v]) => v));
+    // prevent error when using single quotes in SQL query
+    const singleQuotesFix = this.fixSingleQuote(filteredBody);
 
     // create a query string from body content
-    const valuesToChange = Object.entries(filteredBody).reduce((acc, currentValue) => {
+    const valuesToChange = Object.entries(singleQuotesFix).reduce((acc, currentValue) => {
       acc.push(`${currentValue[0]} = '${currentValue[1]}'`);
       return acc;
     }, []);

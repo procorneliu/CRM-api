@@ -92,7 +92,7 @@ const protect = catchAsync(async (req, res, next) => {
   }
 
   // 4. Check if user changed password after token was issued
-  if (User.passwordChangedAfter(currentUser.passwordchangedat, decoded.iat)) {
+  if (User.passwordChangedAfter(currentUser.password_changed_at, decoded.iat)) {
     return next(new AppError('User recently changed password! Please log in again.', 401));
   }
   // put user in next requests after this middleware

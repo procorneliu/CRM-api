@@ -7,6 +7,10 @@ const getAll = (tableName) =>
   catchAsync(async (req, res, next) => {
     const allDocuments = await new BaseModel(tableName).findAll();
 
+    if (!allDocuments) {
+      return next(new AppError('No documents found.', 404));
+    }
+
     res.status(200).json({
       status: 'success',
       results: allDocuments.length,
@@ -39,6 +43,11 @@ const createOne = (tableName) =>
   catchAsync(async (req, res, next) => {
     // If there is no provided information
     if (!req.body) return next(new AppError('Please provide full information for creating a new document!', 404));
+
+    // automatic use logged in user id when needed for this tables and id is not provided
+    if (tableName === 'interactions' || (tableName === 'reminders' && !req.body.user_id)) {
+      req.body.user_id = req.user.id;
+    }
 
     // Creating user
     const newDocument = await new BaseModel(tableName).create({ ...req.body });
@@ -79,11 +88,11 @@ const deleteOne = (tableName) =>
     const { id } = req.params;
 
     // 1. Check if user exists
-    const doc = await BaseModel(tableName).findOne(id);
+    const doc = await new BaseModel(tableName).findOne(id);
     if (!doc) return next(new AppError('Document not found.', 404));
 
     // 2. Delete user
-    await BaseModel(tableName).delete(id);
+    await new BaseModel(tableName).delete(id);
 
     res.status(204).json({
       status: 'success',
