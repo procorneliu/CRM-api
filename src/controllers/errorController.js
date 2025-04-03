@@ -1,5 +1,6 @@
 import AppError from '../utils/appError.js';
 
+// Sending error when app is in DEVELOPMENT
 const sendErrorDevelopment = (err, res) => {
   res.status(err.statusCode).json({
     status: err.status,
@@ -9,6 +10,7 @@ const sendErrorDevelopment = (err, res) => {
   });
 };
 
+// Sending error when app is in PRODUCTION
 const sendErrorProducion = (err, res) => {
   // Checking if error is operational or from programming mistakes
   if (err.isOperational) {
@@ -35,13 +37,14 @@ const handleNullColumns = (error) => {
   return new AppError(message, 404);
 };
 
-// Handling errors when key values are duplicated
+// Handling errors when key values are duplicated in PostgreSQL unique constraints
 const handleDuplicateKeysValue = (error) => {
   const message = `Duplicate key value for column ${error.constraint.split('_')[1]}`;
 
   return new AppError(message, 404);
 };
 
+// Global error handler configuration
 export default (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
@@ -54,7 +57,7 @@ export default (err, req, res, next) => {
   else if (process.env.NODE_ENV === 'production') {
     let error = { ...err };
 
-    // Manual error handling for better experience
+    // Manual handling some errors for better experience
     if (err.routine === 'ExecConstraints') error = handleNullColumns(error);
     if (err.routine === '_bt_check_unique') error = handleDuplicateKeysValue(error);
 

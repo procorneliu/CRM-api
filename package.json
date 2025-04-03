@@ -5,10 +5,14 @@
   "scripts": {
     "start": "nodemon server.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "crm",
+    "business",
+    "api"
+  ],
+  "author": "Corneliu Procopenco",
   "license": "ISC",
-  "description": "",
+  "description": "An API for all CRUD operations on users, customers, sales, interactions, reminders for a CRM use, integrated with JWT authentication",
   "type": "module",
   "dependencies": {
     "bcryptjs": "^3.0.2",

@@ -5,6 +5,7 @@ import { createCRUDRoutes } from '../utils/createCRUD.js';
 
 const router = express.Router();
 
+// Requiring authorization
 router.use(authController.protect);
 
 // CRUD routes
