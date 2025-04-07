@@ -77,7 +77,9 @@ _You can find a full API documentation for this project in the following link:_
 If you want to quickly test the API, you can **fork** (_copy_) the collection into your own Postman workspace:
 
 1. Click the **Fork** button on the collection page;
+
    [<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://god.gw.postman.com/run-collection/39477521-9d268107-2b3e-432f-a827-19b525617c19?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D39477521-9d268107-2b3e-432f-a827-19b525617c19%26entityType%3Dcollection%26workspaceId%3D67ff2e9e-a074-43a8-aeea-5a472425434d#?env%5BDEVELOPMENT%5D=W3sia2V5IjoiVVJMIiwidmFsdWUiOiJodHRwOi8vMTI3LjAuMC4xOjMwMDAvYXBpIiwiZW5hYmxlZCI6dHJ1ZSwidHlwZSI6ImRlZmF1bHQiLCJzZXNzaW9uVmFsdWUiOiJodHRwOi8vMTI3LjAuMC4xOjMwMDAvYXBpIiwiY29tcGxldGVTZXNzaW9uVmFsdWUiOiJodHRwOi8vMTI3LjAuMC4xOjMwMDAvYXBpIiwic2Vzc2lvbkluZGV4IjowfSx7ImtleSI6Imp3dCIsInZhbHVlIjoiIiwiZW5hYmxlZCI6dHJ1ZSwidHlwZSI6ImFueSIsInNlc3Npb25WYWx1ZSI6IiIsImNvbXBsZXRlU2Vzc2lvblZhbHVlIjoiIiwic2Vzc2lvbkluZGV4IjoxfV0=)
+
 2. Select **_Fork Collection_**;
 3. Choose the workspace where you want to copy the collection;
 4. Click **_Fork Collection_** again to confirm.
