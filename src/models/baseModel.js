@@ -22,8 +22,20 @@ class BaseModel {
     return fixedValues;
   }
 
+  // for safe queries, check if table exists
+  checkTable() {
+    const allowedTables = ['users', 'customers', 'sales', 'interactions', 'reminders'];
+
+    if (!allowedTables.includes(this.tableName)) {
+      throw new Error('Invalid table name');
+    }
+  }
+
   // Get all data from table
   async findAll() {
+    // check table name
+    this.checkTable();
+
     // creating query string
     const query = `SELECT secure_select('${this.tableName}')`;
 
@@ -36,11 +48,15 @@ class BaseModel {
 
   // Get a specific row from table based on ID
   async findOne(id) {
+    // check table name
+    this.checkTable();
+
     // creating query string
-    const query = `SELECT * FROM ${this.tableName} WHERE id = ${id}`;
+    const query = `SELECT * FROM ${this.tableName} WHERE id = $1`;
+    const values = [id];
 
     // making request
-    const document = await querySQL(query);
+    const document = await querySQL(query, values);
 
     // if password was not changed don't show in response
     if (document.rows[0].password_changed_at === null) document.rows[0].password_changed_at = undefined;
@@ -51,6 +67,9 @@ class BaseModel {
 
   // Create a new document
   async create(bodyData) {
+    // check table name
+    this.checkTable();
+
     // Encrypt password if creating a new user manually as an admin
     if (bodyData.password) {
       bodyData.password = await bcrypt.hash(bodyData.password, 12);
@@ -59,16 +78,17 @@ class BaseModel {
     const singleQuotesFix = this.fixSingleQuote(bodyData);
 
     // creating strings for what columns with what values to set
-    const columnKeys = Object.keys(singleQuotesFix).join(', ');
-    const columnValues = Object.values(singleQuotesFix)
-      .map((value) => (typeof value === 'string' ? `'${value}'` : value))
-      .join(', ');
+    const keys = Object.keys(singleQuotesFix);
+    const values = Object.values(singleQuotesFix);
+
+    const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+    const columnKeys = keys.join(', ');
 
     // creating query string
-    const query = `INSERT INTO ${this.tableName}(${columnKeys}) VALUES(${columnValues}) RETURNING *`;
+    const query = `INSERT INTO ${this.tableName}(${columnKeys}) VALUES(${placeholders}) RETURNING *`;
 
     // making request
-    const newDocument = await querySQL(query);
+    const newDocument = await querySQL(query, values);
 
     // hide sensitive data
     newDocument.rows[0].password = undefined;
@@ -80,22 +100,37 @@ class BaseModel {
 
   // Update document
   async update(id, body) {
+    // check table name
+    this.checkTable();
+
+    if (!body) throw new Error('No data provided!');
+
     // filtering body from sensitive data
     const filteredBody = Object.fromEntries(Object.entries({ ...body }).filter(([_, v]) => v));
+
+    // ecrypt and set password_changed_at to now if updating password
+    if (filteredBody.password) {
+      // ecrypt
+      filteredBody.password = await bcrypt.hash(filteredBody.password, 12);
+
+      // set password_changed_at to now
+      filteredBody.password_changed_at = new Date(Date.now()).toLocaleString();
+    }
 
     // prevent error when using single quotes in SQL query
     const singleQuotesFix = this.fixSingleQuote(filteredBody);
 
     // create a query string from body content
-    const valuesToChange = Object.entries(singleQuotesFix).reduce((acc, currentValue) => {
-      acc.push(`${currentValue[0]} = '${currentValue[1]}'`);
-      return acc;
-    }, []);
+    const keys = Object.keys(singleQuotesFix);
+    const columnsToChange = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
+    const values = keys.map((key) => singleQuotesFix[key]);
+    values.push(id); // Add ID as last parameter
 
     // creating query string
-    const query = `UPDATE ${this.tableName} SET ${valuesToChange.join(', ')} WHERE id = ${id} RETURNING *`;
+    const query = `UPDATE ${this.tableName} SET ${columnsToChange} WHERE id = $${values.length} RETURNING *`;
+
     // making request
-    const updatedDocument = await querySQL(query);
+    const updatedDocument = await querySQL(query, values);
 
     // hide sensitive data
     updatedDocument.rows[0].password = undefined;
@@ -106,11 +141,15 @@ class BaseModel {
 
   // Delete document
   async delete(id) {
+    // check table name
+    this.checkTable();
+
     // creating query string
-    const query = `DELETE FROM ${this.tableName} WHERE id = ${id}`;
+    const query = `DELETE FROM ${this.tableName} WHERE id = $1`;
+    const values = [id];
 
     // making request
-    await querySQL(query);
+    await querySQL(query, values);
   }
 }
 
